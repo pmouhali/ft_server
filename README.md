@@ -62,6 +62,9 @@ src/localhost.conf line:16 : `fastcgi_pass unix:/var/run/php/php7.3-fpm.sock;`
 On vérifie que la version de php est la bonne (sinon le processing php fonctionnera pas).
 
 
-Une fois le container lancé, on va reload nginx pour être sur qu'il utilise notre configuration : `service nginx reload`
-On peut ensuite restart.
 Puis on peut tenter de voir si l'on peut accéder à nos deux urls : localhost/test.html et localhost/info.php
+
+Si le html return une 404, relancer en mappant les ports :
+docker run -p 80:80 -ti [image]
+Si le php return une 404 :
+restart le script php7.3-fpm (dans la ligne de commande du container).
