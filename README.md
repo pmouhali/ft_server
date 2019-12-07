@@ -65,6 +65,9 @@ On vérifie que la version de php est la bonne (sinon le processing php fonction
 Puis on peut tenter de voir si l'on peut accéder à nos deux urls : localhost/test.html et localhost/info.php
 
 Si le html return une 404, relancer en mappant les ports :
+
 docker run -p 80:80 -ti [image]
+
 Si le php return une 404 :
+
 restart le script php7.3-fpm (dans la ligne de commande du container).
