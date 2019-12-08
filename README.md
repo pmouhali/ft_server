@@ -36,7 +36,8 @@ En gros une LEMP stack, c'est le combo linux/nginx/php/mysql pour faire tourner 
 
 Le script install.sh est lancé à la création de l'image et non du container, il contient toutes les opérations 'statiques'.
 
-**src/install.sh line:16-24 :** 
+**src/install.sh line:16-24 :** (on peut skip la partie creation user sql du tuto pour le moment)
+
 `mkdir /var/www/localhost`
 
 On crée le dossier dans lequel le serveur ira chercher les pages web (src/localhost.conf line:5)
@@ -76,3 +77,21 @@ Puis on peut tenter de voir si l'on peut accéder à nos deux urls : localhost/t
 Si le html return une 404, relancer en mappant les ports :
 
     docker run -p 80:80 -ti [nom-qu-on-a-donner-a-l-image]
+
+Pour vérifier qu'on peut effectivement accéder à notre base de données depuis d'autres services (ce qu'on va devoir faire pour wordpress et phpmyadmin), on va créer une base de donnée, et insérer des valeures random à l'intérieures, puis les récupérer depuis un script php :
+
+**src/testdb.sh :**
+
+`echo "CREATE DATABASE testdb;" | mysql -u root`
+
+On peut rentrer ces querys manuellement dans la console sql ou avec echo via un pipe (ce qui permet de les executer via un script).
+
+**src/todo_list.php :**
+
+`$user = "root@localhost";`
+On modifie le script du tuto pour qu'il fonctionne avec notre setup. Dans le script testdb.sh on a appelé l'user root@localhost.
+
+`$database = "testdb";`
+Notre base s'appelle testdb.
+
+On peut maintenant aller vérifier que la page web affiche les infos de la db sur localhost/todo_list.php.
