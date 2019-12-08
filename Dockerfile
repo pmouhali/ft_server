@@ -8,5 +8,7 @@ COPY src/localhost.conf ./
 COPY src/info.php ./
 COPY src/todo_list.php ./
 COPY src/test.html ./
+COPY src/wordpress ./wordpress
+COPY src/phpMyAdmin ./phpMyAdmin
 
 RUN sh install.sh
