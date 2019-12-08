@@ -20,5 +20,3 @@ ln -s /etc/nginx/sites-available/localhost /etc/nginx/sites-enabled/
 
 cp test.html /var/www/localhost/test.html
 cp info.php /var/www/localhost/info.php
-
-/etc/init.d/php7.3-fpm start
