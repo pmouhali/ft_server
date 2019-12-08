@@ -34,6 +34,8 @@ Le script installe d'abord tout les paquets dont on aura besoin. Maintenant, on 
 
 En gros une LEMP stack, c'est le combo linux/nginx/php/mysql pour faire tourner un serveur. On a besoin de ces quatres outils (en plus de wordpress et phpmyadmin). On peut commencer par suivre ce tuto pour faire une installation basique et vérifier que tout marche : https://www.digitalocean.com/community/tutorials/how-to-install-linux-nginx-mariadb-php-lemp-stack-on-debian-10
 
+Le script install.sh est lancé à la création de l'image et non du container, il contient toutes les opérations 'statiques'.
+
 src/install.sh line:16-24 : 
 `mkdir /var/www/localhost`
 
@@ -53,6 +55,13 @@ On link le fichier de conf de sites-available avec celui de sites-enabled
 
 On copie nos deux fichiers tests, un html basique pour voir que le serveur redirige bien sur les bonnes url, un php pour voir si la config php fonctionne, on les place dans le dossier dans lequel le serveur ira chercher les pages web.
 
+Le script run.sh est lancé manuellement dans le container, il contient toutes les opérations qui concernent des processus.
+
+src/run.sh :
+`service nginx start`
+
+On démarre le serveur.
+
 `/etc/init.d/php7.3-fpm start`
 
 On execute le script d'initialisation de php-fpm (c'est pas dans le tuto, on vérifie qu'on l'a dans le container : ls /etc/init.d/, si on l'as pas on a pas installé les bons paquets ou une erreur est survenue.)
@@ -66,8 +75,4 @@ Puis on peut tenter de voir si l'on peut accéder à nos deux urls : localhost/t
 
 Si le html return une 404, relancer en mappant les ports :
 
-docker run -p 80:80 -ti [image]
-
-Si le php return une 404 :
-
-restart le script php7.3-fpm (dans la ligne de commande du container).
+    docker run -p 80:80 -ti [nom-qu-on-a-donner-a-l-image]
