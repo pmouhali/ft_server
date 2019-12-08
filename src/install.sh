@@ -21,3 +21,6 @@ ln -s /etc/nginx/sites-available/localhost /etc/nginx/sites-enabled/
 
 cp test.html /var/www/localhost/test.html
 cp info.php /var/www/localhost/info.php
+
+cp -r wordpress /var/www/localhost/wordpress
+cp -r phpMyAdmin /var/www/localhost/phpMyAdmin

@@ -9,6 +9,7 @@ COPY src/info.php ./
 COPY src/todo_list.php ./
 COPY src/test.html ./
 COPY src/wordpress ./wordpress
+COPY src/wordpress.sql ./
 COPY src/phpMyAdmin ./phpMyAdmin
 
 RUN sh install.sh
