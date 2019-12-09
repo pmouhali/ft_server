@@ -151,10 +151,15 @@ On commence par télécharger Wordpress (on va récupérer une archive compress�
 
     wget http://fr.wordpress.org/latest-fr_FR.tar.gz
 
-On décompresse et déplace le dossier 'wordpress' dans le dossier où le serveur va choper les pages web :
+On décompresse et déplace le dossier 'wordpress' dans le dossier de sources.
 
     tar -xzvf latest-fr_FR.tar.gz
-    mv wordpress/ /var/www/localhost/
+
+Dans le container, on devra placer ce dossier 'wordpress' dans le dossier ou le serveur va choper les pages web, donc on ajoute une instruction au script 'install.sh'.
+
+**src/install.sh line:22 :**
+
+`cp -r wordpress /var/www/localhost/wordpress`
     
 Puis on peut re build l'image et lancer le container.
     
@@ -172,3 +177,44 @@ Wordpress va soit créer, soit nous demander de créer (et copier le contenu ded
 - localhost/wp-admin : le tableau de bord de notre site wordpress
 
 Wordpress est maintenant installé grâce au fichier wp-config. Mais si on sort du container, ce fichier et perdu et il faudra refaire l'installation de wordpress à chaque fois qu'on relance un container. Il faut donc copier le fichier wp-config obtenu (copier/coller par exemple) et le placer dans le dossier wordpress du repo pour que wordpress soit toujours installé après un rebuild/rerun.
+
+Par contre la structure de bdd créee par et pour Wordpress dans la base 'wordpress' sera perdue. La solution est de faire un fichier de sauvegarde de l'état de la bdd et l'importer à chaque rerun. La base sera donc recréee et réimportée à chaque rerun (cela prends plus ou moins de temps en fonction du poids de la base) ce qui permettra de conserver l'installation complète. Pour ça on va utiliser phpMyAdmin.
+
+### phpMyAdmin
+
+(Hors container)
+
+On télécharge phpMyadmin (on va également récupérer une archive compressée depuis le site officiel) :
+
+    wget https://files.phpmyadmin.net/phpMyAdmin/4.9.0.1/phpMyAdmin-4.9.0.1-all-languages.tar.gz
+
+On peut la décompresser, renommer le dossier pour que le nom soit plus court (juste phpMyAdmin) et le placer dans les sources.
+
+**src/install.sh line:22 :**
+
+`cp -r phpMyAdmin /var/www/localhost/phpMyAdmin`
+
+On peut rebuild et run.
+
+On peut aller à 'localhost/phpMyAdmin' pour accéder à l'écran de connexion PMA, il suffit de se connecter avec l'user mysql wordpress : 'wordpress', 'password'.
+
+On peut visualiser nos bases de données dans l'onglet base de donnée. On peut visualiser toutes les tables de la bdd wordpress ainsi que leur contenu.
+Si on poste un commentaire sur wordpress, on pourra aussi le voir sur phpMyAdmin.
+
+On va pouvoir récupérer le fichier de sauvegarde de l'état de la base de donnée wordpress. Il suffit de cliquer sur l'onglet 'Exporter', et récupérer le fichier 'wordpress.sql' (le navigateur le télécharge).
+
+On peut maintenant placer ce fichier dans nos sources puis ajouter une instruction au run script pour importer la base.
+
+**src/run.sh line:9 :**
+
+`mysql wordpress -u root < wordpress.sql`
+
+### Sources
+
+https://github.com/matteoolefloch/ft_server
+
+https://www.digitalocean.com/community/tutorials/how-to-install-linux-nginx-mariadb-php-lemp-stack-on-debian-10
+
+https://howto.wared.fr/installation-wordpress-ubuntu-nginx/
+
+https://www.itzgeek.com/how-tos/linux/debian/how-to-install-phpmyadmin-with-nginx-on-debian-10.html
