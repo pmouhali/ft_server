@@ -1,5 +1,32 @@
 # ft_server
 
+### Usage :
+
+Dans le repo :
+
+    docker build -t [nom-image] .
+    docker run -p 80:80 -ti [nom-image]
+    
+Dans le container une fois lancé :
+
+    bash run.sh
+    
+Urls disponibles (navigateur) :
+- localhost/wordpress
+- localhost/wordpress/wp-config
+- localhost/phpMyAdmin
+
+Pour faire des tests de fonctionnement basiques :
+
+    cd tests/
+    bash test.sh
+    
+- localhost/test.html (la configuration basique fonctionne)
+- localhost/info.php (la configuration php fonctionne)
+- localhost/todo_list.php (la configuration php/sql fonctionne)
+
+# tutoriel
+
 ### Docker :
 
 Une image Docker contient tout ce qu'on décide d’installer (Java, une base de donnée, un script qu'on va lancer, etc…) pour un container, mais est dans un état inerte. Les images sont créées à partir de fichiers de configuration, nommés “Dockerfile”, qui décrivent exactement ce qui doit être installé sur le système. Un conteneur est l’exécution d’une image : il possède la copie du système de fichiers de l’image, ainsi que la capacité de lancer des processus. Dans ce conteneur, on va pouvoir interagir avec les applications installées dans l’image, exécuter des scripts, faire tourner un serveur, etc.
@@ -84,12 +111,32 @@ Pour vérifier qu'on peut effectivement accéder à notre base de données depui
 
 `echo "CREATE DATABASE testdb;" | mysql -u root`
 
-On peut rentrer ces querys manuellement dans la console sql ou avec echo via un pipe (ce qui permet de les executer via un script).
+On peut rentrer ces querys manuellement dans la console sql ou via un pipe avec echo (ce qui permet de les executer via un script).
+
+`echo "CREATE USER 'test'@'localhost';" | mysql -u root`
+
+`echo "SET password FOR 'test'@'localhost' = password('password');" | mysql -u root`
+
+`echo "GRANT ALL ON testdb.* TO 'test'@'localhost' IDENTIFIED BY 'password' WITH GRANT OPTION;" | mysql -u root`
+
+On crée un nouvel user mysql, différent de l'user root (nous) avec lequel on lance les commandes. On lui assigne un mot de passe. On lui donne tout les droits sur la base de donnée 'testdb'. Pourquoi ne pas utiliser root et pourquoi donner tout les droits ?
+
+Les services tels que wordpress et phpMyAdmin ont besoin de se connecter à une base de donnée pour fonctionner. Il sera nécéssaire de pouvoir leur fournir le nom de la base de donnée, un user sql avec lequel se connecter à mysql, qui aura lui même accès à cette base (et donc des droits dessus), et le mot de passe de cet user sql.
+Le script de test php 'todo_list' utilise le même principe, il récupère l'user et son mot de passe pour puiser des infos dans la bdd.
+
+Si on décide d'utiliser 'root' et de lui assigner un mot de passe, lorsqu'on voudra executer d'autres commandes, on ne pourra plus le faire sans renseigner notre mot de passe (on verra des erreurs de ce genre) :
+
+    ERROR 1045 (28000): Access denied for user 'root'@'localhost' (using password: NO)
+    
+Il est donc plus simple d'utiliser un user dédié. (Et c'est fortement recommandé pour des raisons de sécurité.)
 
 **src/tests/todo_list.php :**
 
-`$user = "root@localhost";`
-On modifie le script du tuto pour qu'il fonctionne avec notre setup. Dans le script testdb.sh on a appelé l'user root@localhost.
+`$user = "test";`
+On modifie le script du tuto pour qu'il fonctionne avec notre setup. Dans le script testdb.sh on a appelé l'user 'test'@'localhost'.
+
+`$password = "password";`
+Le mot de passe qu'on à défini est bien password.
 
 `$database = "testdb";`
 Notre base s'appelle testdb.
