@@ -1,5 +1,5 @@
 <?php
-$user = "root@localhost";
+$user = "test";
 $password = "password";
 $database = "testdb";
 $table = "todo_list";
