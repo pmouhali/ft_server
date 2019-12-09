@@ -142,3 +142,33 @@ Le mot de passe qu'on à défini est bien password.
 Notre base s'appelle testdb.
 
 On peut maintenant aller vérifier que la page web affiche les infos de la db sur localhost/todo_list.php.
+
+### Wordpress
+
+(Hors container)
+
+On commence par télécharger Wordpress (on va récupérer une archive compressée depuis le site officiel) :
+
+    wget http://fr.wordpress.org/latest-fr_FR.tar.gz
+
+On décompresse et déplace le dossier 'wordpress' dans le dossier où le serveur va choper les pages web :
+
+    tar -xzvf latest-fr_FR.tar.gz
+    mv wordpress/ /var/www/localhost/
+    
+Puis on peut re build l'image et lancer le container.
+    
+**src/run.sh line:4-8 :**
+
+`echo "CREATE DATABASE wordpress;" | mysql -u root`
+
+On crée une bdd wordpress, un user dédié avec son mot de passe comme pour le test todo_list.
+
+On peut ensuite aller à localhost/wordpress qui normalement amène à l'install menu de wordpress. On nous demandera le nom de la db, le nom de l'user sql, le password, le nom du serveur etc : 'wordpress', 'wordpress', 'password', 'localhost', etc.
+
+Wordpress va soit créer, soit nous demander de créer (et copier le contenu dedans) le fichier 'wp-config.php'. Il devra se trouver dans le dossier 'wordpress/'. Si on est pas redirigé automatiquement, on peut maintenant aller à :
+
+- localhost/wordpress : la page d'acceuil de notre site wordpress
+- localhost/wp-admin : le tableau de bord de notre site wordpress
+
+Wordpress est maintenant installé grâce au fichier wp-config. Mais si on sort du container, ce fichier et perdu et il faudra refaire l'installation de wordpress à chaque fois qu'on relance un container. Il faut donc copier le fichier wp-config obtenu (copier/coller par exemple) et le placer dans le dossier wordpress du repo pour que wordpress soit toujours installé après un rebuild/rerun.
