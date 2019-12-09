@@ -12,7 +12,7 @@ Une fois le Dockerfile remplit avec ce qu'on veut, on peut build l'image (comme 
 
       
 **Dockerfile line:1 :** 
-    `FROM debian:buster`
+    `FROM debian:buster-slim`
 
 L'instruction FROM permet de spécifier une image existante sur laquelle on veut se baser. Parfait pour nous, on va démarrer depuis une image qui contient l'OS Debian Buster.
 
@@ -50,11 +50,11 @@ On copie le fichier de config custom dans le repertoire nginx (le fichier devra 
 
 On link le fichier de conf de sites-available avec celui de sites-enabled
 
-`cp test.html /var/www/localhost/test.html`
+**src/tests/test.sh line:3-5:**
 
 `cp info.php /var/www/localhost/info.php`
 
-On copie nos deux fichiers tests, un html basique pour voir que le serveur redirige bien sur les bonnes url, un php pour voir si la config php fonctionne, on les place dans le dossier dans lequel le serveur ira chercher les pages web.
+On copie nos fichiers tests, un html basique pour voir que le serveur redirige bien sur les bonnes url, un php pour voir si la config php fonctionne (todo_list.php servira plus tard), on les place dans le dossier dans lequel le serveur ira chercher les pages web.
 
 Le script run.sh est lancé manuellement dans le container, il contient toutes les opérations qui concernent des processus.
 
@@ -80,13 +80,13 @@ Si le html return une 404, relancer en mappant les ports :
 
 Pour vérifier qu'on peut effectivement accéder à notre base de données depuis d'autres services (ce qu'on va devoir faire pour wordpress et phpmyadmin), on va créer une base de donnée, et insérer des valeures random à l'intérieures, puis les récupérer depuis un script php :
 
-**src/testdb.sh :**
+**src/tests/test.sh line:9-18:**
 
 `echo "CREATE DATABASE testdb;" | mysql -u root`
 
 On peut rentrer ces querys manuellement dans la console sql ou avec echo via un pipe (ce qui permet de les executer via un script).
 
-**src/todo_list.php :**
+**src/tests/todo_list.php :**
 
 `$user = "root@localhost";`
 On modifie le script du tuto pour qu'il fonctionne avec notre setup. Dans le script testdb.sh on a appelé l'user root@localhost.
