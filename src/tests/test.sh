@@ -1,5 +1,7 @@
 #!/bin/sh
 
+cp test.html /var/www/localhost/test.html
+cp info.php /var/www/localhost/info.php
 cp todo_list.php /var/www/localhost/todo_list.php
 
 service mysql start
