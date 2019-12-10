@@ -12,4 +12,6 @@ COPY src/phpMyAdmin ./phpMyAdmin
 
 COPY src/wordpress.sql ./
 
+COPY src/ssl_certif ./ssl_certif
+
 RUN sh install.sh

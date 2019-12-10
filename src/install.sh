@@ -9,11 +9,10 @@ apt-get -y install php php-cli php-cgi php-mbstring
 apt-get -y install php-fpm
 apt-get -y install php-mysql
 apt-get -y install nginx
+apt-get -y install libnss3-tools
 
 # NGINX x PHP
 
-chown -R root:root /var/www/*
-chmod -R 755 /var/www/*
 mkdir /var/www/localhost
 
 cp localhost.conf /etc/nginx/sites-available/localhost
