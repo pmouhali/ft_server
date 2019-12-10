@@ -1,5 +1,32 @@
 # ft_server
 
+### Usage :
+
+Dans le repo :
+
+    docker build -t [nom-image] .
+    docker run -p 80:80 -ti [nom-image]
+    
+Dans le container une fois lancé :
+
+    bash run.sh
+    
+Urls disponibles (navigateur) :
+- localhost/wordpress
+- localhost/wordpress/wp-config
+- localhost/phpMyAdmin
+
+Pour faire des tests de fonctionnement basiques :
+
+    cd tests/
+    bash test.sh
+    
+- localhost/test.html (la configuration basique fonctionne)
+- localhost/info.php (la configuration php fonctionne)
+- localhost/todo_list.php (la configuration php/sql fonctionne)
+
+# tutoriel
+
 ### Docker :
 
 Une image Docker contient tout ce qu'on décide d’installer (Java, une base de donnée, un script qu'on va lancer, etc…) pour un container, mais est dans un état inerte. Les images sont créées à partir de fichiers de configuration, nommés “Dockerfile”, qui décrivent exactement ce qui doit être installé sur le système. Un conteneur est l’exécution d’une image : il possède la copie du système de fichiers de l’image, ainsi que la capacité de lancer des processus. Dans ce conteneur, on va pouvoir interagir avec les applications installées dans l’image, exécuter des scripts, faire tourner un serveur, etc.
@@ -84,14 +111,110 @@ Pour vérifier qu'on peut effectivement accéder à notre base de données depui
 
 `echo "CREATE DATABASE testdb;" | mysql -u root`
 
-On peut rentrer ces querys manuellement dans la console sql ou avec echo via un pipe (ce qui permet de les executer via un script).
+On peut rentrer ces querys manuellement dans la console sql ou via un pipe avec echo (ce qui permet de les executer via un script).
+
+`echo "CREATE USER 'test'@'localhost';" | mysql -u root`
+
+`echo "SET password FOR 'test'@'localhost' = password('password');" | mysql -u root`
+
+`echo "GRANT ALL ON testdb.* TO 'test'@'localhost' IDENTIFIED BY 'password' WITH GRANT OPTION;" | mysql -u root`
+
+On crée un nouvel user mysql, différent de l'user root (nous) avec lequel on lance les commandes. On lui assigne un mot de passe. On lui donne tout les droits sur la base de donnée 'testdb'. Pourquoi ne pas utiliser root et pourquoi donner tout les droits ?
+
+Les services tels que wordpress et phpMyAdmin ont besoin de se connecter à une base de donnée pour fonctionner. Il sera nécéssaire de pouvoir leur fournir le nom de la base de donnée, un user sql avec lequel se connecter à mysql, qui aura lui même accès à cette base (et donc des droits dessus), et le mot de passe de cet user sql.
+Le script de test php 'todo_list' utilise le même principe, il récupère l'user et son mot de passe pour puiser des infos dans la bdd.
+
+Si on décide d'utiliser 'root' et de lui assigner un mot de passe, lorsqu'on voudra executer d'autres commandes, on ne pourra plus le faire sans renseigner notre mot de passe (on verra des erreurs de ce genre) :
+
+    ERROR 1045 (28000): Access denied for user 'root'@'localhost' (using password: NO)
+    
+Il est donc plus simple d'utiliser un user dédié. (Et c'est fortement recommandé pour des raisons de sécurité.)
 
 **src/tests/todo_list.php :**
 
-`$user = "root@localhost";`
-On modifie le script du tuto pour qu'il fonctionne avec notre setup. Dans le script testdb.sh on a appelé l'user root@localhost.
+`$user = "test";`
+On modifie le script du tuto pour qu'il fonctionne avec notre setup. Dans le script testdb.sh on a appelé l'user 'test'@'localhost'.
+
+`$password = "password";`
+Le mot de passe qu'on à défini est bien password.
 
 `$database = "testdb";`
 Notre base s'appelle testdb.
 
 On peut maintenant aller vérifier que la page web affiche les infos de la db sur localhost/todo_list.php.
+
+### Wordpress
+
+(Hors container)
+
+On commence par télécharger Wordpress (on va récupérer une archive compressée depuis le site officiel) :
+
+    wget http://fr.wordpress.org/latest-fr_FR.tar.gz
+
+On décompresse et déplace le dossier 'wordpress' dans le dossier de sources.
+
+    tar -xzvf latest-fr_FR.tar.gz
+
+Dans le container, on devra placer ce dossier 'wordpress' dans le dossier ou le serveur va choper les pages web, donc on ajoute une instruction au script 'install.sh'.
+
+**src/install.sh line:22 :**
+
+`cp -r wordpress /var/www/localhost/wordpress`
+    
+Puis on peut re build l'image et lancer le container.
+    
+**src/run.sh line:4-8 :**
+
+`echo "CREATE DATABASE wordpress;" | mysql -u root`
+
+On crée une bdd wordpress, un user dédié avec son mot de passe comme pour le test todo_list.
+
+On peut ensuite aller à localhost/wordpress qui normalement amène à l'install menu de wordpress. On nous demandera le nom de la db, le nom de l'user sql, le password, le nom du serveur etc : 'wordpress', 'wordpress', 'password', 'localhost', etc.
+
+Wordpress va soit créer, soit nous demander de créer (et copier le contenu dedans) le fichier 'wp-config.php'. Il devra se trouver dans le dossier 'wordpress/'. Si on est pas redirigé automatiquement, on peut maintenant aller à :
+
+- localhost/wordpress : la page d'acceuil de notre site wordpress
+- localhost/wp-admin : le tableau de bord de notre site wordpress
+
+Wordpress est maintenant installé grâce au fichier wp-config. Mais si on sort du container, ce fichier et perdu et il faudra refaire l'installation de wordpress à chaque fois qu'on relance un container. Il faut donc copier le fichier wp-config obtenu (copier/coller par exemple) et le placer dans le dossier wordpress du repo pour que wordpress soit toujours installé après un rebuild/rerun.
+
+Par contre la structure de bdd créee par et pour Wordpress dans la base 'wordpress' sera perdue. La solution est de faire un fichier de sauvegarde de l'état de la bdd et l'importer à chaque rerun. La base sera donc recréee et réimportée à chaque rerun (cela prends plus ou moins de temps en fonction du poids de la base) ce qui permettra de conserver l'installation complète. Pour ça on va utiliser phpMyAdmin.
+
+### phpMyAdmin
+
+(Hors container)
+
+On télécharge phpMyadmin (on va également récupérer une archive compressée depuis le site officiel) :
+
+    wget https://files.phpmyadmin.net/phpMyAdmin/4.9.0.1/phpMyAdmin-4.9.0.1-all-languages.tar.gz
+
+On peut la décompresser, renommer le dossier pour que le nom soit plus court (juste phpMyAdmin) et le placer dans les sources.
+
+**src/install.sh line:22 :**
+
+`cp -r phpMyAdmin /var/www/localhost/phpMyAdmin`
+
+On peut rebuild et run.
+
+On peut aller à 'localhost/phpMyAdmin' pour accéder à l'écran de connexion PMA, il suffit de se connecter avec l'user mysql wordpress : 'wordpress', 'password'.
+
+On peut visualiser nos bases de données dans l'onglet base de donnée. On peut visualiser toutes les tables de la bdd wordpress ainsi que leur contenu.
+Si on poste un commentaire sur wordpress, on pourra aussi le voir sur phpMyAdmin.
+
+On va pouvoir récupérer le fichier de sauvegarde de l'état de la base de donnée wordpress. Il suffit de cliquer sur l'onglet 'Exporter', et récupérer le fichier 'wordpress.sql' (le navigateur le télécharge).
+
+On peut maintenant placer ce fichier dans nos sources puis ajouter une instruction au run script pour importer la base.
+
+**src/run.sh line:9 :**
+
+`mysql wordpress -u root < wordpress.sql`
+
+### Sources
+
+https://github.com/matteoolefloch/ft_server
+
+https://www.digitalocean.com/community/tutorials/how-to-install-linux-nginx-mariadb-php-lemp-stack-on-debian-10
+
+https://howto.wared.fr/installation-wordpress-ubuntu-nginx/
+
+https://www.itzgeek.com/how-tos/linux/debian/how-to-install-phpmyadmin-with-nginx-on-debian-10.html
