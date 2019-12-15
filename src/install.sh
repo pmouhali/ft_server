@@ -11,12 +11,16 @@ apt-get -y install php-mysql
 apt-get -y install nginx
 apt-get -y install libnss3-tools
 
-# NGINX x PHP
-
 mkdir /var/www/localhost
 
+cp /var/www/html/index.nginx-debian.html /var/www/localhost/index.html
+
 cp localhost.conf /etc/nginx/sites-available/localhost
+rm localhost.conf
+
 ln -s /etc/nginx/sites-available/localhost /etc/nginx/sites-enabled/
 
 cp -r wordpress /var/www/localhost/wordpress
+rm -r wordpress
 cp -r phpMyAdmin /var/www/localhost/phpMyAdmin
+rm -r phpMyAdmin

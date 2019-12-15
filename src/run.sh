@@ -8,12 +8,11 @@ echo "GRANT ALL PRIVILEGES ON wordpress.* TO 'wordpress'@'localhost' IDENTIFIED 
 echo "FLUSH PRIVILEGES;" | mysql -u root 
 mysql wordpress -u root < wordpress.sql
 
-cd ssl_certif
+cd ssl
+chmod +x mkcert
 ./mkcert -install
 ./mkcert localhost
 cd ..
-
-cp /var/www/html/index.nginx-debian.html /var/www/localhost/index.html
 
 service nginx reload
 service nginx configtest
