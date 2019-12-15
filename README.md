@@ -11,7 +11,7 @@ Dans le container une fois lancé :
 
     bash run.sh
     
-Urls disponibles (navigateur) :
+Urls disponibles (navigateur, le certificat ssl n'est pas reconnu, le navigateur renverra une erreur de connexion non privée, autoriser la connexion quand même ou enlever la config ssl dans src/localhost.conf) :
 - localhost/wordpress
 - localhost/wordpress/wp-config
 - localhost/phpMyAdmin
