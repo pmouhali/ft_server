@@ -28,6 +28,28 @@ Pour faire des tests de fonctionnement basiques :
 
 # tutoriel
 
+### Docker-machine mac 42
+
+Docker utilise une techno native Linux donc on devra le faire tourner sur machine virtuelle. Pour pas se prendre la tête :
+
+- installer VirtualBox depuis le Managed Software Center (dispo sur les macs de l'école)
+- installer Docker toujours depuis le Managed Software Center
+- run ce script : https://github.com/Millon15/php_piscine/blob/master/docker_init.sh
+
+Pour faire tourner le serveur on le branche sur un ou plusieurs ports (80, 443). Le serveur écoute le port X du container. Mais le port X du container n'est pas forcément le port X de notre machine (sur laquelle tourne notre navigateur), ça va poser problème pour se connecter au serveur. Il faudra 'mapper' les ports : c'est à dire les faire correspondre.
+
+Au moment de lancer un container, on pourra utiliser l'option '-p' pour que le port X du container corresponde au port X de la machine sur laquelle le container tourne.
+
+Puisqu'on fait tourner notre container sur docker-machine, une machine virtuelle, la commande de mapping de port de docker ne mappera pas le port du container à celui de notre mac, mais à celui de la machine virtuelle. Meme chose pour la VM, il faudra mapper son port au notre.
+
+Donc : port:mac <-> port:vm <-> port:container.
+
+Apres avoir run le script sans erreur, pour map le port de la vm au notre (443 est le numero de port pour ma config, on peut en mettre un autre) :
+
+    docker-machine stop default
+    vboxmanage modifyvm default --natpf1 "localhost,tcp,,443,,443"
+    docker-machine start default
+
 ### Docker :
 
 Une image Docker contient tout ce qu'on décide d’installer (Java, une base de donnée, un script qu'on va lancer, etc…) pour un container, mais est dans un état inerte. Les images sont créées à partir de fichiers de configuration, nommés “Dockerfile”, qui décrivent exactement ce qui doit être installé sur le système. Un conteneur est l’exécution d’une image : il possède la copie du système de fichiers de l’image, ainsi que la capacité de lancer des processus. Dans ce conteneur, on va pouvoir interagir avec les applications installées dans l’image, exécuter des scripts, faire tourner un serveur, etc.
