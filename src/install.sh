@@ -13,11 +13,7 @@ apt-get -y install libnss3-tools
 
 mkdir /var/www/localhost
 
-cp /var/www/html/index.nginx-debian.html /var/www/localhost/index.html
-
-cp localhost.conf /etc/nginx/sites-available/localhost
-rm localhost.conf
-
+cp localhost_index_on /etc/nginx/sites-available/localhost
 ln -s /etc/nginx/sites-available/localhost /etc/nginx/sites-enabled/
 
 cp -r wordpress /var/www/localhost/wordpress

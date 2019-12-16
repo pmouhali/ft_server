@@ -14,8 +14,9 @@ server {
 		ssl_certificate /ssl/localhost.pem;
 		ssl_certificate_key /ssl/localhost-key.pem;
 
-
 		server_name localhost;
+		
+		autoindex off;
 		
 		root /var/www/localhost;
 		index index.php index.html index.htm;
