@@ -1,20 +1,18 @@
 FROM debian:buster-slim
 
-COPY src/install.sh ./
-COPY src/run.sh ./
-COPY src/index_on_off.sh ./
-COPY src/stop_services.sh ./
+RUN apt-get -y update && apt-get -y install mariadb-server \ 
+			wget \
+			php \
+			php-cli \
+	 		php-cgi \
+			php-mbstring \
+			php-fpm \
+			php-mysql \
+			nginx \
+			libnss3-tools
 
-COPY src/tests ./tests
-COPY src/localhost.conf ./
-COPY src/localhost_index_on ./
-COPY src/localhost_index_off ./
+COPY src ./root/
 
-COPY src/wordpress ./wordpress
-COPY src/phpMyAdmin ./phpMyAdmin
+WORKDIR /root/
 
-COPY src/wordpress.sql ./
-
-COPY src/ssl ./ssl
-
-RUN bash install.sh
+ENTRYPOINT ["bash", "container_entrypoint.sh"]

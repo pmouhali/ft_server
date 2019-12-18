@@ -11,8 +11,8 @@ server {
 		listen 443 ssl;
 		listen [::]:443 ssl;
 
-		ssl_certificate /ssl/localhost.pem;
-		ssl_certificate_key /ssl/localhost-key.pem;
+		ssl_certificate /root/ssl/localhost.pem;
+		ssl_certificate_key /root/ssl/localhost-key.pem;
 
 		server_name localhost;
 		
