@@ -5,11 +5,7 @@
 Dans le repo :
 
     docker build -t [nom-image] .
-    docker run -p 443:443 -ti [nom-image]
-    
-Dans le container une fois lancé :
-
-    bash run.sh
+    docker run -p 443:443 [nom-image]
     
 Urls disponibles (navigateur, le certificat ssl n'est pas reconnu, le navigateur renverra une erreur de connexion non privée, poursuivre la navigation quand même) :
 - localhost/index.html
@@ -17,9 +13,13 @@ Urls disponibles (navigateur, le certificat ssl n'est pas reconnu, le navigateur
 - localhost/wordpress/wp-config
 - localhost/phpMyAdmin
 
-Pour faire des tests de fonctionnement basiques :
+Pour pouvoir utiliser shell dans le container :
+    
+    docker exec -it [pid ou nom du container] /bin/bash
 
-    cd tests/
+Pour faire des tests de fonctionnement basiques : 
+
+    cd /root/tests/
     bash test.sh
     
 - localhost/test.html (la configuration basique fonctionne)
