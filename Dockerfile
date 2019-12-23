@@ -11,7 +11,7 @@ RUN apt-get -y update && apt-get -y install mariadb-server \
 			nginx \
 			libnss3-tools
 
-COPY src ./root/
+COPY srcs ./root/
 
 WORKDIR /root/
 
