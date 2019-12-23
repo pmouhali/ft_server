@@ -58,45 +58,71 @@ Une fois le Dockerfile remplit avec ce qu'on veut, on peut build l'image (comme 
 
     docker build -t [nom-qu-on-veut-donner-a-l-image] .
 
-    docker run -ti [nom-qu-on-a-donner-a-l-image]
+    docker run [nom-qu-on-a-donner-a-l-image]
 
       
 **Dockerfile line:1 :** `FROM debian:buster-slim`
 
 L'instruction FROM permet de spécifier une image existante sur laquelle on veut se baser. Parfait pour nous, on va démarrer depuis une image qui contient l'OS Debian Buster.
 
-Si on build puis run avec cette seule instruction, on obtient un container dans lequel est installé Debian Buster. L'option -i de la commande run nous permet d'être en mode interactif, on a accès à un terminal. Si on lance la commande ls dans ce terminal, on peut voir que les fichiers présents sont seulement ceux livrés avec l'installation de Debian.
+Si on build puis run avec cette seule instruction, on obtient un container dans lequel est installé Debian Buster. L'option -i de la commande run nous permet de lancer un container en mode interactif : on a accès au terminal du container. Si on lance la commande ls dans ce terminal, on peut voir que les fichiers présents sont seulement ceux livrés avec l'installation de Debian.
 
-Pour installer des paquets et configurer le serveur avec les autres services, on va avoir besoin d'un script pour lancer plein de commandes à notre place et de fichiers de configuration. Pour que le container ai accès aux fichiers dont on a besoin, on va les copier de notre dossier src/ au container. On utilise l'instruction COPY du Dockerfile.
+Dans l'idéal, on veut obtenir un container dans lequel le serveur est déjà prêt et ne nécéssite aucune configuration manuelle une fois lancé.
 
-**Dockerfile line:3-15 :** `COPY src/install.sh ./`
+Pour configurer le serveur, il faudra installer les paquets dont nous aurons besoin (php pour phpMyAdmin par exemple), et y copier les fichiers et dossiers que nous utiliserons (un fichier de configuration nginx par exemple).
+
+Pour executer une commande pendant la création de l'image, et donc avant le lancement du container, on utilise l'instruction RUN du Dockerfile, qui pourra executer une commande Shell. On peut lui spécifier directement les commandes ou bien lui demander d'executer un script qui lui contiendrai toutes nos commandes et opérations (copier des fichiers par exemple).
+
+Ici, on utilisera l'instruction RUN uniquement pour installer les paquets.
+
+**Dockerfile line:3-12 :** `RUN apt-get -y update && apt-get -y install mariadb-server \ 
+			wget \
+			php \
+			php-cli \
+	 		php-cgi \
+			php-mbstring \
+			php-fpm \
+			php-mysql \
+			nginx \
+			libnss3-tools`
+            
+Pour choisir comment construire son Dockerfile : https://docs.docker.com/develop/develop-images/dockerfile_best-practices/
     
-Maintenant si on build/run puis ls, on peut voir que les fichier copiés sont présents en plus de ceux livrés par Debian.
-On peut donc lancer le script sans problème.
+Maintenant si on build/run puis ls, on peut voir que les fichiers présent sont ceux livrés par Debian et ceux installés par les libs (paquets).
 
-**src/install.sh line:3-12 :** `apt-get -y install nginx`
+**src/container_entrypoint.sh line:3-12 :** `COPY srcs ./root/`
 
-Le script installe d'abord tout les paquets dont on aura besoin. Maintenant, on a les fichier Debian, ceux de tout les paquets installés (exactement comme si ils avaient été installés sur notre machine), et nos fichiers de config et scripts.
+Tout le contenu du dossier 'srcs' tel quel sera copié dans le dossier 'root' du container. Le container possèdera donc, entres autres, dans son dossier 'root' nos fichiers de configurations, et nos dossiers d'installation de wordpress et phpMyAdmin.
 
-**Dockerfile line:17 :** `RUN bash install.sh`
+**Dockerfile line:16 :** `WORKDIR /root/`
 
-L'instruction RUN permet d'executer une commande lors du build de l'image. Ici on lance le script install.sh, il contient des opérations simples et 'statiques' comme l'installation de paquets et des manipulations de fichiers. Il peut donc être lancé pendant le build de l'image, cela permet d'économiser des opérations au démarrage du container.
+L'instruction WORKDIR permet de spécifier dans quel dossier se placer au lancement du container, si un ENTRYPOINT ou CMD (https://docs.docker.com/engine/reference/builder/#entrypoint) est spécifié, les commandes lancées le seront depuis ce dossier. Si la commande est un script à executer, il est nécéssaire de lancer le script dans le repertoire ou se trouve le script.
 
-Si une opération relative à un processus, comme démarrer un processus par exemple (`service nginx restart`), était lancé au build de l'image, ça ne servirai à rien. Le processus ne serait pas actif au démarrage du container. Une image ne contient qu'un système de fichier. Ce genre d'opérations devront donc être lancées au démarrage du container.
+**Dockerfile line:16 :** `ENTRYPOINT ["bash", "container_entrypoint.sh"]`
+
+L'instruction ENTRYPOINT permet (explication très grossière) de préciser une commande à executer au lancement du container.
+On va lancer le script 'container_entrypoint.sh' qui contient les opérations qui finalisent la config du serveur.
+
+**Notes :**
+
+Le script 'container_entrypoint.sh' lance la commande `service nginx start`. Cette commande démarre le serveur nginx.
+
+Si on executait ce script via l'instruction RUN du Dockerfile, pendant la construction de l'image, au lancement du container le serveur ne serait pas du tout démarré, et donc ne fonctionnerai pas. Une image ne peut contenir de processus. Elle ne contiendra que des données 'statiques', comme des fichiers, des instructions de déplacement de dossier, installer des fichers (des paquets), etc.
+
+Toutes les instructions relatives a des processus devront être lancées une fois le container démarré, sois manuellement dans le container, sois via une instruction ENTRYPOINT ou CMD par exemple.
 
 ### LEMP Stack
 
 En gros une LEMP stack, c'est le combo linux/nginx/php/mysql pour faire tourner un serveur. On a besoin de ces quatres outils (en plus de wordpress et phpmyadmin). On peut commencer par suivre ce tuto pour faire une installation basique et vérifier que tout marche : https://www.digitalocean.com/community/tutorials/how-to-install-linux-nginx-mariadb-php-lemp-stack-on-debian-10
 
-Le script install.sh est lancé à la création de l'image et non du container, il contient toutes les opérations 'statiques'.
 
-**src/install.sh line:14-26 :** (on peut skip la partie creation user sql du tuto pour le moment)
+**srcs/container_entrypoint.sh line:3-6 :** (on peut skip la partie creation user sql du tuto pour le moment)
 
 `mkdir /var/www/localhost`
 
-On crée le dossier dans lequel le serveur ira chercher les pages web (src/localhost.conf line:5)
+On crée le dossier dans lequel le serveur ira chercher les pages web (src/localhost_index_on line:5)
 
-`cp localhost.conf /etc/nginx/sites-available/localhost`
+`cp localhost_index_on /etc/nginx/sites-available/localhost`
 
 On copie le fichier de config custom dans le repertoire nginx (le fichier devra juste s'appeler localhost)
 
@@ -104,7 +130,7 @@ On copie le fichier de config custom dans le repertoire nginx (le fichier devra 
 
 On link le fichier de conf de sites-available avec celui de sites-enabled
 
-**src/tests/test.sh line:3-5:**
+**srcs/tests/test.sh line:3-5:**
 
 `cp info.php /var/www/localhost/info.php`
 
@@ -112,7 +138,7 @@ On copie nos fichiers tests, un html basique pour voir que le serveur redirige b
 
 Le script run.sh est lancé manuellement dans le container, il contient toutes les opérations qui concernent des processus.
 
-**src/run.sh line:17-23 :** `service nginx start`
+**srcs/container_entrypoint.sh line:27-30 :** `service nginx start`
 
 On démarre le serveur.
 
@@ -120,7 +146,7 @@ On démarre le serveur.
 
 On execute le script d'initialisation de php-fpm (c'est pas dans le tuto, on vérifie qu'on l'a dans le container : ls /etc/init.d/, si on l'as pas on a pas installé les bons paquets ou une erreur est survenue.)
 
-**src/localhost.conf line:29 :** `fastcgi_pass unix:/var/run/php/php7.3-fpm.sock;`
+**srcs/localhost_index_on line:30 :** `fastcgi_pass unix:/var/run/php/php7.3-fpm.sock;`
 
 Vérifier sur cette ligne que la version de php est la bonne (sinon le processing php fonctionnera pas).
 
@@ -133,7 +159,7 @@ Si le html return une 404, relancer en mappant les ports (80 si la configuration
 
 Pour vérifier qu'on peut effectivement accéder à notre base de données depuis d'autres services (ce qu'on va devoir faire pour wordpress et phpmyadmin), on va créer une base de donnée, et insérer des valeures random à l'intérieur, puis les récupérer depuis un script php :
 
-**src/tests/test.sh line:9-18:**
+**srcs/tests/test.sh line:9-18:**
 
 `echo "CREATE DATABASE testdb;" | mysql -u root`
 
@@ -156,7 +182,7 @@ Si on décide d'utiliser 'root' et de lui assigner un mot de passe, lorsqu'on vo
     
 Il est donc plus simple d'utiliser un user dédié. (Et c'est fortement recommandé pour des raisons de sécurité.)
 
-**src/tests/todo_list.php :**
+**srcs/tests/todo_list.php :**
 
 `$user = "test";`
 On modifie le script du tuto pour qu'il fonctionne avec notre setup. Dans le script testdb.sh on a appelé l'user 'test'@'localhost'.
@@ -183,11 +209,11 @@ On décompresse et déplace le dossier 'wordpress' dans le dossier de sources.
 
 Dans le container, on devra placer ce dossier 'wordpress' dans le dossier ou le serveur va choper les pages web, donc on ajoute une instruction au script 'install.sh'.
 
-**src/install.sh line:23 :** `cp -r wordpress /var/www/localhost/wordpress`
+**src/container_entrypoint.sh line:8 :** `cp -r wordpress /var/www/localhost/wordpress`
     
 Puis on peut re build l'image et lancer le container.
     
-**src/run.sh line:4-8 :**
+**src/container_entrypoint.sh line:13-18 :**
 
 `echo "CREATE DATABASE wordpress;" | mysql -u root`
 
@@ -214,7 +240,7 @@ On télécharge phpMyadmin (on va également récupérer une archive compressée
 
 On peut la décompresser, renommer le dossier pour que le nom soit plus court (juste phpMyAdmin) et le placer dans les sources.
 
-**src/install.sh line:25 :** `cp -r phpMyAdmin /var/www/localhost/phpMyAdmin`
+**src/container_entrypoint.sh line:10 :** `cp -r phpMyAdmin /var/www/localhost/phpMyAdmin`
 
 On peut rebuild et run.
 
@@ -227,7 +253,7 @@ On va pouvoir récupérer le fichier de sauvegarde de l'état de la base de donn
 
 On peut maintenant placer ce fichier dans nos sources puis ajouter une instruction au run script pour importer la base.
 
-**src/run.sh line:9 :** `mysql wordpress -u root < wordpress.sql`
+**src/container_entrypoint.sh line:19 :** `mysql wordpress -u root < wordpress.sql`
 
 ### SSL
 
@@ -240,6 +266,8 @@ https://lehollandaisvolant.net/?d=2019/01/07/22/57/47-localhost-et-https
 https://letsencrypt.org/fr/docs/certificates-for-localhost/
 
 https://r.je/guide-lets-encrypt-certificate-for-local-development
+
+Si on a des 'erreurs' de type connexion non privée en utilisant ssl, c'est ok. On n'est pas censés utiliser ssl pour du local, le but du sujet n'est pas de réussir à faire accepter notre certificat self-signed ou local au navigateur.
 
 ### Autres
 
