@@ -136,8 +136,6 @@ On link le fichier de conf de sites-available avec celui de sites-enabled
 
 On copie nos fichiers tests, un html basique pour voir que le serveur redirige bien sur les bonnes url, un php pour voir si la config php fonctionne (todo_list.php servira plus tard), on les place dans le dossier dans lequel le serveur ira chercher les pages web.
 
-Le script run.sh est lancé manuellement dans le container, il contient toutes les opérations qui concernent des processus.
-
 **srcs/container_entrypoint.sh line:27-30 :** `service nginx start`
 
 On démarre le serveur.
